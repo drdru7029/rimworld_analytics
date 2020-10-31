@@ -92,7 +92,7 @@ for theme in psychology_theme_list:
 #                                               mappable_key='intelligence_theme')
 # excel_sheet_to_mappable_dict('dictionaries.xlsx',"Psychology traits",main_cat_key='trait',
 #                                               mappable_key='bravery_theme')
-
+print('git test')
 #All single line data
 pawn_join_date = []
 pawn_biological_age = []
@@ -129,7 +129,7 @@ print('post psych')
 for keys,values in pawn_dict.items():
     print(keys,values)
 
-radar_names = ['Michael','Dade','Gizmo','Hayhouse']
+radar_names = ['Michael','Dade','Gizmo','Hayhouse','Lou', 'Panther']
 
 pawn_psychology_selected = []
 
@@ -143,16 +143,14 @@ for pawn_name in radar_names:
         #Normalize the list since any meaningful comparison needs to take into account different max values
         pawn_psychology[idx] = uf.normalize_list_max(psych_data, inverse=False)
 
-        for name_idx,(name,data) in enumerate(zip(all_pawns,psych_data)):
+        for name_idx,(name,data) in enumerate(zip(all_pawns,pawn_psychology[idx])):
             if name==pawn_name:
                 branch.append([data])
     pawn_psychology_selected.append(branch)
 
 print('pawn_psychology_selected',pawn_psychology_selected)
 
-for idx,(name,psych_data) in enumerate(zip(radar_names,pawn_psychology_selected)):
-        # pawn_psychology_selected.append(psych_data)
-        ufm.radar_chart_simple(psych_data, psychology_theme_list, value_labels=name)
+
 
 
 print('pawn_health')
@@ -186,17 +184,24 @@ for val,pawn in zip(normalized_all,all_pawns):
     print(val,pawn)
 
 
-ufm.bar_chart_simple(normalized_all, all_pawns, "Overall Best Pawn" + " " + str(today_date),
-                         using_dates=False, average_line=True, axis_font_size=16, show=True)
-
-ufm.bar_chart_simple(superman_list, all_pawns, "Pawn Psychology_Superman Combined" + " " + str(today_date),
-                         using_dates=False, average_line=True, axis_font_size=16, show=True)
-
-for theme,psych in zip(psychology_theme_list,pawn_psychology):
-    ufm.bar_chart_simple(psych, all_pawns, "Pawn Psychology_ {}".format(theme) + " " + str(today_date),
-                         using_dates=False, average_line=True, axis_font_size=16, show=True)
+for idx,(name,psych_data) in enumerate(zip(radar_names,pawn_psychology_selected)):
+        # pawn_psychology_selected.append(psych_data)
+        try:
+            ufm.radar_chart_simple(psych_data, psychology_theme_list, value_labels=name, enter_title="Comprehensive Psych Themes",show=True)
+        except ValueError:
+            print("Cannot make radar chart for {}.".format(name))
 
 if show_all:
+
+    for theme, psych in zip(psychology_theme_list, pawn_psychology):
+        ufm.bar_chart_simple(psych, all_pawns, "Pawn Psychology_ {}".format(theme) + " " + str(today_date),
+                             using_dates=False, average_line=True, axis_font_size=16, show=True)
+
+    ufm.bar_chart_simple(normalized_all, all_pawns, "Overall Best Pawn" + " " + str(today_date),
+                         using_dates=False, average_line=True, axis_font_size=16, show=True)
+
+    ufm.bar_chart_simple(superman_list, all_pawns, "Pawn Psychology_Superman Combined" + " " + str(today_date),
+                         using_dates=False, average_line=True, axis_font_size=16, show=True)
 
     #Total skills
     ufm.bar_chart_simple(pawn_total_skills,all_pawns,"Pawn Total Skills"+" "+str(today_date), using_dates=False,

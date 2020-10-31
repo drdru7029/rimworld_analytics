@@ -5,9 +5,9 @@ from itertools import groupby, chain
 
 #MAIN DEFINITIONS
 
-citiesout_path = r"D:\Google Drive\Games Archives\Rimworld\Save backups\Anhatia Accord (Permadeath)_current.txt"
+citiesout_path = r"D:\Google Drive\Games Archives\Rimworld\Save backups\Anhatia Accord (Permadeath).txt"
 if os.path.exists(citiesout_path)==False:
-    citiesout_path = r"C:\Users\Ace\Google Drive\Games Archives\Rimworld\Save backups\Anhatia Accord (Permadeath)_current.txt"
+    citiesout_path = r"C:\Users\Ace\Google Drive\Games Archives\Rimworld\Save backups\Anhatia Accord (Permadeath).txt"
 
 raw_data = []
 
@@ -40,8 +40,7 @@ pawn_names = []
 colonist_demarker_2 = 'Faction_9'
 
 end_demarker = '<abilityDataPawnAbilityUser.AbilityData>Thing_Human'
-# end_demarker = '<medCare>Best</medCare>'
-end_demarker = '<abilityDataAbilityUser.GenericCompAbilityUser>'
+end_demarker = '<medCare>Best</medCare>'
 for idx,each in enumerate(colony_pawns):
     # if idx==10:
     #     print(each)
@@ -70,8 +69,7 @@ skills_relevant = ['<def>', '<level>', '<passion>']
 
 
 
-substrings_to_remove = ["</def>", "\n", "<def>", "<level>", "<passion>", "</level>", "</passion>",
-                        '<painFactor>','</painFactor>','<rawRating>','</rawRating>']
+substrings_to_remove = ["</def>", "\n", "<def>", "<level>", "<passion>", "</level>", "</passion>", '<painFactor>','</painFactor>']
 skill_subdict_keys = ["Level", "Passion"]
 pawn_names_substrings = ['<nick>','</nick>']
 
@@ -79,21 +77,11 @@ health_traits_keys = []
 health_begin = '<healthTracker>'
 health_end = '</healthTracker>'
 health_relevant = ['<painFactor>']
-
-#Psychology
-psych_begin = '<psyche>'
-psych_end = '</psyche>'
-psych_relevant = ['<def>', '<rawRating>']
-
 # '<isPermanent>', ,'<severity>'
 for i in pawn_names_substrings:
     pawn_names = [x.replace(i,'') for x in pawn_names]
 pawn_names = [i.strip() for i in pawn_names]
 
-print(len(colony_pawns_final))
-pawn_names = [i for i in pawn_names if 'Cleaning Bot' not in i]
-for idx, (i, name) in enumerate(zip(colony_pawns_final, pawn_names)):
-    pawn_dict[name] = {}
 
 def extract_single_values(value_strings, label="",debug=False):
 
@@ -130,12 +118,10 @@ def extract_single_values(value_strings, label="",debug=False):
             final_values = [i.replace(x,'') for i in final_values]
         final_values = [i.strip() for i in final_values]
 
-
-
     if debug:
         print('finalvals',final_values)
-    print('Pawn names:',pawn_names)
-    assert len(final_values)==len(pawn_names),print("Warning! {} len does not equal pawn len: {} vs {}.".format(label,len(final_values),len(pawn_names)))
+
+    assert len(final_values)==len(pawn_names),print("Warning! {} len does not equal pawn len.".format(label))
 
     #automatically add to pawn_dict
     for group_idx,(name,val) in enumerate(zip(pawn_names,final_values)):
@@ -146,15 +132,11 @@ def extract_single_values(value_strings, label="",debug=False):
 
 
     # return extract_list
-pawns_to_remove = []
-def extract_chain_values(value_begin,value_end,relevant_list,label,subdict_keys = [],subdict=False):
+
+def extract_chain_values(value_begin,value_end,relevant_list,label,subdict_keys = []):
     for idx, (i, name) in enumerate(zip(colony_pawns_final, pawn_names)):
         # if len(i)<1000:
 
-        # if name not in pawn_dict.keys():
-        #     pawn_dict[name] = {}
-        if subdict:
-            pawn_dict[name][label] = {}
 
         # print(idx,name,len(i))
         for idx2, j in enumerate(i):
@@ -176,9 +158,8 @@ def extract_chain_values(value_begin,value_end,relevant_list,label,subdict_keys 
         value_groups = []
 
         for idx, each in enumerate(values_list):
-            # print('each',idx,each)
+            # print(idx,each)
             if label=="Skills":
-                # print('check', name, each)
                 if '<def>' in each:
                     try:  # check for passion; if not, leave blank
                         if '<passion>' in values_list[idx + 2]:
@@ -195,30 +176,18 @@ def extract_chain_values(value_begin,value_end,relevant_list,label,subdict_keys 
                     if len(branch) == 2:
                         branch.append('na')
 
-                    # value_groups.append(branch)
-
+                    value_groups.append(branch)
             elif label=="Health":
-                # print('check',name,each)
+                # print(label,each)
                 if health_relevant[0] in each:
                     branch = [each]
-            elif label=='Psychology':
-                # print('check',name,each)
-                if '<def>' in each:
-                    # print('check', name, each, values_list[idx+1])
-                    try:
-                        branch = [each,values_list[idx+1]]
-                    except IndexError:
-                        branch = [each,'0']
-                        pawns_to_remove.append(name)
-                    # print('TESTBRANCH', name,branch)
 
-
-            value_groups.append(branch)
+                value_groups.append(branch)
 
 
             for x in substrings_to_remove:
                 value_groups = [[j.replace(x, '') for j in i] for i in value_groups]
-            # print('valuegroups',value_groups)
+            print('valuegroups',value_groups)
 
         if label == 'Skills':
             # account for zero skill blanks
@@ -229,10 +198,7 @@ def extract_chain_values(value_begin,value_end,relevant_list,label,subdict_keys 
                             value_groups[idx][idx2] = int(val)
                         except ValueError:
                             value_groups[idx][idx2] = 0
-            # print('valgroups',value_groups)
             keys = [i.pop(0) for i in value_groups]
-
-            # print('keys',keys)
 
 
         elif label=='Health':
@@ -246,43 +212,98 @@ def extract_chain_values(value_begin,value_end,relevant_list,label,subdict_keys 
 
         # print('keys',keys)
 
-        else:
-            # print('psychvalue_groups', idx, name, value_groups)
-            for idx, each in enumerate(value_groups):
-                for idx2, val in enumerate(each):
-                    if idx2 == 1:
-                        # print('TESTTEST',name,value_groups[idx][idx2])
-                        try:
-                            value_groups[idx][idx2] = float(val)
-                        except ValueError:
-                            value_groups[idx][idx2] = 0
-            # print('valgroups',value_groups)
-            keys = [i.pop(0) for i in value_groups]
-
-
-            # print('valuegroups',value_groups)
-
 
 
         for group_idx, i in enumerate(value_groups):
-            if len(subdict_keys)>0:
+            if subdict_keys:
                 pawn_dict[name][keys[group_idx]] = {}
                 for k, v in zip(subdict_keys, i):
                     pawn_dict[name][keys[group_idx]][k] = v
             else:
+                pawn_dict[name][keys[group_idx]] = value_groups[group_idx]
 
-                if subdict: #Places values in a subdictionary
-                    pawn_dict[name][label][keys[group_idx]] = value_groups[group_idx]
-                else:
-                    pawn_dict[name][keys[group_idx]] = value_groups[group_idx]
+        # for group_idx,i in enumerate(groups):
+        #     pawn_dict[name][keys[group_idx]] = {}
+        #     for k,v in zip(skill_subdict_keys, i):
+        #         pawn_dict[name][keys[group_idx]][k] = v
 
+
+test_run = False
+if test_run:
+    for idx,(i,name) in enumerate(zip(colony_pawns_final,pawn_names)):
+        # if len(i)<1000:
+
+        pawn_dict[name] = {}
+
+        # print(idx,name,len(i))
+        for idx2,j in enumerate(i):
+            # print('test', j)
+
+            if skill_begin in j:
+                skill_begin_idx = idx2
+            elif skill_end in j:
+                skill_end_idx = idx2
+
+        pawn_skills = i[skill_begin_idx:skill_end_idx]
+        pawn_skills = [i.replace('\t','') for i in pawn_skills]
+
+        #Distill down to skill cat, skill and passion
+        pawn_skills = [i for i in pawn_skills if any(w in i for w in skills_relevant)]
+
+        groups = []
+        #Group each into nested list, taking into account passions
+        # for each in pawn_skills:
+        #     if '<def>' in each:
+        #         groups.append([])
+
+        for idx,each in enumerate(pawn_skills):
+            # print(idx,each)
+            if '<def>' in each:
+                try: #check for passion; if not, leave blank
+                    if '<passion>' in pawn_skills[idx+2]:
+                        branch = [each,pawn_skills[idx+1],pawn_skills[idx+2]]
+                    else:
+                        branch = [each,pawn_skills[idx+1]]
+                except IndexError:
+                    try:
+                        branch = [each,pawn_skills[idx+1]]
+                    except IndexError: #Correct for last IDX intellectuals with zero
+                        # print('ERROR',idx,pawn,each)
+                        branch = [each, '0']
+
+                if len(branch)==2:
+                    branch.append('na')
+
+                groups.append(branch)
+
+            for x in substrings_to_remove:
+                groups = [[j.replace(x,'') for j in i] for i in groups]
+
+        #account for zero skill blanks
+        for idx,each in enumerate(groups):
+            for idx2,val in enumerate(each):
+                if idx2==1:
+                    try:
+                        groups[idx][idx2] = int(val)
+                    except ValueError:
+                        groups[idx][idx2] = 0
+
+
+
+            # print('groups',idx,name,groups)
+        keys = [i.pop(0) for i in groups]
+        # print('keys',keys)
+
+        for group_idx,i in enumerate(groups):
+            pawn_dict[name][keys[group_idx]] = {}
+            for k,v in zip(skill_subdict_keys, i):
+                pawn_dict[name][keys[group_idx]][k] = v
 
 
 extract_chain_values(skill_begin, skill_end, skills_relevant, "Skills", subdict_keys= skill_subdict_keys)
 extract_chain_values(health_begin,health_end,health_relevant,"Health")
-extract_chain_values(psych_begin,psych_end,psych_relevant,"Psychology",subdict=True)
 
-pawns_to_remove = list(set(pawns_to_remove))
+
 
 ##ADD NEW DICT K:V HERE##
 
@@ -294,18 +315,6 @@ join_dates = extract_single_values(join_strings,label="Join date")
 age_strings = ['<ageBiologicalTicks>','</ageBiologicalTicks>']
 pawn_ages = extract_single_values(age_strings,label="Biological age")
 
-print('MAIN PAWN DICT')
-for pawn in pawns_to_remove:
-    print('Notice: removing {} from dictionary as some key:value pairs failed.'.format(pawn))
-    del pawn_dict[pawn]
-
 for keys,values in pawn_dict.items():
-    if keys in pawns_to_remove:
-        del pawn_dict[keys]
-        # break
     print(keys,values)
     print('')
-
-print('')
-print('----------------END MAIN--------------------')
-print('')
